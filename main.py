@@ -1,4 +1,6 @@
 import os
+import time
+
 import telebot
 from telebot.types import Message, ReplyKeyboardMarkup, KeyboardButton
 from os import getenv
@@ -14,7 +16,7 @@ users_data = load_users_data()
 
 
 @bot.message_handler(commands=['start'])
-def start(message: Message):
+def start_bot(message: Message):
     user_id = str(message.from_user.id)
     if user_id not in users_data:
         register_new_user(message)
@@ -54,17 +56,27 @@ def hi(message):
 
 
 @bot.message_handler(commands=['restart'])
-def restart_game(message):
+def restart_user_game(message):
     user_id = str(message.from_user.id)
     users_data[user_id]["location_in_world"] = "start_place"
     users_data[user_id]["user_items"] = []
     bot.send_message(user_id, "Игра начинается заного...")
+    start_game(message)
 
 
 @bot.message_handler(func=lambda message: True)
 def handler_answer(message: Message):
     user_id = str(message.from_user.id)
-    make_locations_markup(user_id)
+
+
+def start_game(message: Message):
+    for x in range(20):
+        bot.send_message(message.from_user.id, "⬇️") # Убирает предыдущие сообщение от внимания
+        time.sleep(0.2)
+    bot.send_audio(message.from_user.id, audio="Media/Фоновая муза.mp3")
+
+
+
 
 
 ''' Клавиатура ⬇️ '''
@@ -76,6 +88,7 @@ def make_locations_markup(user_id):
     for bottom in world[user_location]['ways']:
         markup.add(bottom)
     return markup
+
 
 
 bot.polling()
