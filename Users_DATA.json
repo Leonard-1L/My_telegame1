@@ -1,12 +1,13 @@
 {
-   "6332228115": {
-      "username": "Leoprofi",
-      "location_in_world": "start_place",
-      "user_items": []
-   },
    "5033843573": {
       "username": "mazelow_tyan",
       "location_in_world": "start_place",
       "user_items": []
+   },
+   "6332228115": {
+      "username": "Leoprofi",
+      "location_in_world": "start_place",
+      "user_items": [],
+      "user_achievements": []
    }
 }

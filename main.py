@@ -1,6 +1,4 @@
-import os
 import time
-
 import telebot
 from telebot.types import Message, ReplyKeyboardMarkup, KeyboardButton
 from os import getenv
@@ -8,10 +6,10 @@ from dotenv import load_dotenv
 from DATA_changes import *
 
 load_dotenv()
-token = getenv("bot_token")
-bot = telebot.TeleBot(token)
+TOKEN = getenv("TOKEN")
+bot = telebot.TeleBot(TOKEN)
 
-world = load_world()
+WORLD = load_world()
 users_data = load_users_data()
 
 
@@ -22,7 +20,7 @@ def start_bot(message: Message):
         register_new_user(message)
         hi(message)
     else:
-        bot.send_message(user_id, "Если вы хотите перезагрузить игру, используйте команду /restart.")
+        bot.send_message(user_id, "Здравствуй! Если ты хочешь перезагрузить игру, используйте команду /restart.")
 
 
 def register_new_user(message):
@@ -31,14 +29,15 @@ def register_new_user(message):
         "username": message.from_user.username,
         "location_in_world": "start_place",
         "user_items": [],
-        "user_achievements": []
+        "user_achievements": [],
+        "user_spaming": 0
     }
     savefile(users_data)
 
 
 def hi(message):
     if message.from_user.id:
-        user_name = message.from_user.id
+        user_name = message.from_user.username
     else:
         user_name = "пользователь"
     text = (
@@ -58,37 +57,31 @@ def hi(message):
 @bot.message_handler(commands=['restart'])
 def restart_user_game(message):
     user_id = str(message.from_user.id)
-    users_data[user_id]["location_in_world"] = "start_place"
-    users_data[user_id]["user_items"] = []
-    bot.send_message(user_id, "Игра начинается заного...")
-    start_game(message)
+    if user_id in users_data:
+        users_data[user_id]["location_in_world"] = "start_place"
+        users_data[user_id]["user_items"] = []
+        bot.send_message(user_id, "Игра начинается заного...")
+        start_game(message)
+    else:
+        start_bot(message)
 
 
 @bot.message_handler(func=lambda message: True)
-def handler_answer(message: Message):
-    user_id = str(message.from_user.id)
-
-
 def start_game(message: Message):
-    for x in range(20):
-        bot.send_message(message.from_user.id, "⬇️") # Убирает предыдущие сообщение от внимания
-        time.sleep(0.2)
-    bot.send_audio(message.from_user.id, audio="Media/Фоновая муза.mp3")
+    user_id = str(message.from_user.id)
+    for x in range(10):
+        bot.send_message(message.from_user.id, "⬇️")
+        time.sleep(0.1)
+    if users_data[user_id]["user_spaming"] <= 2:
+        with open("Media/Фоновая муза.mp3", "rb") as file:
+            bot.send_audio(user_id, audio=file)
+    else:
+        bot.send_message(user_id, "Извини, но ты слишком часто перезапускал игру, я не могу присылать фоновую музыку.")
+    users_data[user_id]["user_spaming"] += 1
 
 
-
-
-
-''' Клавиатура ⬇️ '''
-
-
-def make_locations_markup(user_id):
-    markup = ReplyKeyboardMarkup()
-    user_location = users_data[user_id]['location_in_world']
-    for bottom in world[user_location]['ways']:
-        markup.add(bottom)
-    return markup
-
+# сделать вывод пути для пользователя, сделать сохранение предмета у пользователя при заход на новую локацию,
+# вывод инвентаря пользователя, сделать больше локаций, сделать распознование куда идет пользователь
 
 
 bot.polling()
