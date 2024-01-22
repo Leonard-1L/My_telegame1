@@ -8,6 +8,7 @@
       "username": "Leoprofi",
       "location_in_world": "start_place",
       "user_items": [],
-      "user_achievements": []
+      "user_achievements": [],
+      "user_restart_spaming": 0
    }
 }
