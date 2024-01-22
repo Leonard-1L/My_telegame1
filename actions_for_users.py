@@ -6,6 +6,7 @@ users_data = DATA_changes.load_users_data()
 
 ''' Клавиатура ⬇️ '''
 
+
 def make_locations_markup(user_id):
     markup = ReplyKeyboardMarkup()
     user_location = users_data[user_id]['location_in_world']

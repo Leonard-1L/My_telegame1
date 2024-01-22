@@ -99,8 +99,6 @@ def start_game(message: Message):
         game_atmosphera(message)
 
 
-
-
 def game_atmosphera(message: Message):
     user_id = str(message.from_user.id)
     for x in range(10):
