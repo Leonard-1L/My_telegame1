@@ -1,14 +1,9 @@
 {
-   "5033843573": {
-      "username": "mazelow_tyan",
-      "location_in_world": "start_place",
-      "user_items": []
-   },
    "6332228115": {
       "username": "Leoprofi",
-      "location_in_world": "start_place",
+      "location_in_world": "Запертая дверь",
       "user_items": [],
       "user_achievements": [],
-      "user_restart_spaming": 0
+      "user_restart_spaming": 5
    }
 }
