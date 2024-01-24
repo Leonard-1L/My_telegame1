@@ -20,9 +20,11 @@ def start_bot(message: Message):
     if user_id not in users_data:
         register_new_user(message)
         hi(message)
-        time.sleep(6)
     else:
-        bot.send_message(user_id, "Здравствуй! Если ты хочешь перезагрузить игру, используйте команду /restart.")
+        bot.send_message(user_id,
+                         f"Здравствуй вновь, {message.from_user.username}! Если ты хочешь перезагрузить игру, "
+                         f"используйте команду /restart.")
+    savefile(users_data)
 
 
 def register_new_user(message):
@@ -30,7 +32,7 @@ def register_new_user(message):
     users_data[user_id] = {
         "username": message.from_user.username,
         "location_in_world": "Начальная локация",
-        "user_items": [],
+        "user_items": {},
         "user_achievements": [],
         "user_restart_spaming": 0
     }
@@ -54,7 +56,7 @@ def hi(message):
     markup = ReplyKeyboardMarkup()
     markup.add(KeyboardButton("Начать❕"))
     bot.send_message(message.from_user.id, text, reply_markup=markup)
-    time.sleep(4)
+    time.sleep(1)
 
 
 @bot.message_handler(commands=['restart'])
@@ -62,7 +64,7 @@ def restart_user_game(message):
     user_id = str(message.from_user.id)
     if user_id in users_data:
         users_data[user_id]["location_in_world"] = "Начальная локация"
-        users_data[user_id]["user_items"] = []
+        users_data[user_id]["user_items"] = {}
         bot.send_message(user_id, "Cекунду...")
         savefile(users_data)
         time.sleep(1.5)
@@ -97,65 +99,42 @@ def send_user_location(message: Message):
         start_bot(message)
 
 
-'''Обработка мира ⬇️'''
-
-
-@bot.message_handler(func=lambda message: if_it_way(message))
-def user_path_processing(message: Message):
-    try:
-        user_id = str(message.from_user.id)
-        if message.text == 'Запертая дверь':
-            if "Золотой ключик" in users_data[user_id]["user_items"]:
-                bot.send_message(user_id, "Отлично! Ключ подошёл!")
-                user_go(message)
-            else:
-                location_markup = make_locations_markup(user_id)
-                bot.send_message(user_id, "О нет! Дверь заперта. Нужно найти где-то ключ.\n"
-                                          "<b>Выбери путь:</b>", reply_markup=location_markup, parse_mode='HTML')
-        if message.text == "Обменять все свои вещи в инвентаре на мантию-невидимку":
-            if "Золотая монетка" in users_data[user_id]["user_items"]:
-                bot.send_message(user_id,
-                                 "Обмен прошел успешно. Незнакомец продал вам мантию-неведимку.",
-                                 reply_markup=make_locations_markup(user_id))
-                users_data[user_id]["user_items"] = ["Мантия-невидимка"]
-                return
-            else:
-                bot.send_message(user_id, "Незнакомец глядя на ваш инвентарь отказался от сделки.",
-                                 reply_markup=make_locations_markup(user_id)
-                                 )
-                return
-        user_go(message)
-        location_description = user_location_description(message)
-        location_markup = make_locations_markup(user_id)
-        bot.send_message(user_id, text=f"<i>{location_description}</i>\n"
-                                       "\n"
-                                       "<b>Выбери путь:</b>", reply_markup=location_markup, parse_mode='HTML')
-    except Exception as E:
-        print(f'{E} by {message.from_user.username} in path_processihg')
-        bot.send_message(message.from_user.id, "У нас на сервере техническая школадочка, приносим извинения!")
-        bot.register_next_step_handler(message, start_game)
+@bot.message_handler(func=lambda message: message.text == "Начать❕")
+def start_first_location(message: Message):
+    user_id = str(message.from_user.id)
+    if user_id not in users_data:
+        start_bot(message)
+    print(users_data)
+    game_atmosphera(message)
+    print(users_data)
+    markup = ReplyKeyboardMarkup()
+    markup.add(KeyboardButton("Первый этаж"))
+    text = WORLD['Начальная локация']['description']
+    bot.send_message(user_id, f"<i>{text}</i>", parse_mode='HTML')
+    time.sleep(2)
+    bot.send_message(user_id, "<i>Зайти на первый этаж?</i>", reply_markup=markup,
+                     parse_mode='HTML')
 
 
 @bot.message_handler(func=lambda message: True)
 def start_game(message: Message):
-    try:
-        user_id = str(message.from_user.id)
-        if user_id not in users_data:
-            bot.register_next_step_handler(message, start_bot)
-        if message.text == "Начать❕":
-            game_atmosphera(message)
-            location_markup = make_locations_markup(user_id)
-            text = WORLD['Начальная локация']['description']
-            bot.send_message(user_id, f"<i>{text}</i>", parse_mode='HTML')
-            time.sleep(4)
-            bot.send_message(user_id, "<i>Ничего не оствается, тебе придется пойти..</i>", reply_markup=location_markup,
-                             parse_mode='HTML')
-        else:
-            bot.send_message(user_id, "Не могу распознать сообщение. Выбери действие в предложенной клавиатуре.")
-    except Exception as E:
-        print(f'{E} by {message.from_user.username} in start game')
-        bot.send_message(message.from_user.id, "У нас на сервере техническая неполадочка, приносим извинения!")
-        bot.register_next_step_handler(message, start_game)
+    # try:
+    user_id = str(message.from_user.id)
+    if if_it_way(message):
+        user_path_processing(message)
+    if user_id not in users_data:
+        bot.register_next_step_handler(message, start_bot)
+        game_atmosphera(message)
+        location_markup = make_locations_markup(user_id)
+        text = WORLD['Начальная локация']['description']
+        bot.send_message(user_id, f"<i>{text}</i>", parse_mode='HTML')
+        time.sleep(2)
+        bot.send_message(user_id, "<i>В здание?</i>", reply_markup=location_markup,
+                         parse_mode='HTML')
+    # except Exception as E:
+    #     print(f'{E} by {message.from_user.username} in start game')
+    #     bot.send_message(message.from_user.id, "У нас на сервере техническая неполадочка, приносим извинения!")
+    #     bot.register_next_step_handler(message, start_game)
 
 
 def game_atmosphera(message: Message):
@@ -166,17 +145,57 @@ def game_atmosphera(message: Message):
     else:
         msg = bot.send_message(user_id,
                                "Ты слишком часто перезапускал игру, я больше не могу присылать фоновую музыку.")
-        time.sleep(2)
         bot.delete_message(user_id, msg.id)
-
     bot.send_message(user_id, "Совет: Используйте наушники для глобального погружения")
     bot.send_message(user_id, "Игра начинается...")
-    time.sleep(3)
+    time.sleep(5)
     for x in range(10):
         bot.send_message(message.from_user.id, "⬇️")  # путем спама скрывает предыдущие игры
         time.sleep(0.1)
     users_data[user_id]["user_restart_spaming"] += 1
     savefile(users_data)
+
+
+def user_path_processing(message: Message):
+    # try:
+    user_id = str(message.from_user.id)
+    location_markup = make_locations_markup(user_id)
+    if message.text == 'Запертая дверь':
+        if "Золотой ключик" in users_data[user_id]["user_items"]:
+            bot.send_message(user_id, "Отлично! Ключ подошёл!", reply_markup=location_markup)
+            user_go(message)
+            return
+        else:
+            location_markup = ReplyKeyboardMarkup()
+            location_markup.add(KeyboardButton("Подвал"))
+            bot.send_message(user_id, "О нет! Дверь заперта. Нужно найти где-то ключ.\n"
+                                      "<b>Возвращайся назад</b>", reply_markup=location_markup, parse_mode='HTML')
+            return
+    if message.text == "Обменять все свои вещи в инвентаре на мантию-невидимку":
+        if "Золотая монетка" in users_data[user_id]["user_items"]:
+            bot.send_message(user_id,
+                             "Обмен прошел успешно. Незнакомец продал вам мантию-неведимку.",
+                             reply_markup=location_markup)
+            users_data[user_id]["user_items"] = ["Мантия-невидимка"]
+            return
+        else:
+            location_markup = ReplyKeyboardMarkup()
+            location_markup.add(KeyboardButton("Запертая дверь"))
+            bot.send_message(user_id, "Незнакомец глядя на ваш инвентарь отказался от сделки. Возвращайтесь назад "
+                                      "и ищите что-то ценное",
+                             reply_markup=location_markup
+                             )
+            return
+    else:
+        user_go(message)
+        location_description = user_location_description(message)
+        bot.send_message(user_id, text=f"<i>{location_description}</i>\n"
+                                       "\n"
+                                       "<b>Выбери путь:</b>", reply_markup=location_markup, parse_mode='HTML')
+    # except Exception as E:
+    #     print(f'{E} by {message.from_user.username} in path_processihg')
+    #     bot.send_message(message.from_user.id, "У нас на сервере техническая шoколадочка, приносим извинения!")
+    #     start_game(message)
 
 
 #  сделать сохранение предмета у пользователя при заход на новую локацию,

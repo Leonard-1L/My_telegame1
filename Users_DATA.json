@@ -1,9 +1,9 @@
 {
    "6332228115": {
       "username": "Leoprofi",
-      "location_in_world": "Запертая дверь",
-      "user_items": [],
+      "location_in_world": "Начальная локация",
+      "user_items": {},
       "user_achievements": [],
-      "user_restart_spaming": 5
+      "user_restart_spaming": 1
    }
 }
