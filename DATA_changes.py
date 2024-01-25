@@ -14,7 +14,7 @@ def load_users_data():
         with open(users_file, "r", encoding="utf-8") as file:
             users_data = json.load(file)
             return users_data
-    except ValueError:
+    except (FileNotFoundError, json.decoder.JSONDecodeError):
         return {}
 
 
