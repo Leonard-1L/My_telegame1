@@ -7,12 +7,7 @@ users_data = load_users_data()
 ''' Клавиатура ⬇️ '''
 
 
-def make_locations_markup(user_id):
-    markup = ReplyKeyboardMarkup()
-    user_location = users_data[str(user_id)]['location_in_world']
-    for bottom in WORLD[user_location]['ways']:
-        markup.add(bottom)
-    return markup
+
 
 
 ''' Инвентарь ⬇️ '''
@@ -38,10 +33,7 @@ def user_put_up(user_id):
 
 def if_it_way(message):
     user_location = users_data[str(message.from_user.id)]['location_in_world']
-    if message.text in WORLD[user_location]['ways']:
-        return True
-    else:
-        return False
+    return message.text in WORLD[user_location]['ways']
 
 
 def user_location_description(user_id):

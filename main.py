@@ -141,8 +141,8 @@ def game_atmosphera(message: Message):
 def user_path_processing(message: Message):
     user_id = str(message.from_user.id)
     if message.text == 'Запертая дверь':
-        if "Золотой ключик" in users_data[user_id]["user_items"].values():
-            user_go(user_id)
+        if "Золотой ключик" in users_data[user_id]["user_items"]:
+            users_data[user_id]['location_in_world'] = 'Запертая дверь'
             bot.send_message(user_id,
                              "Отлично! Ключ подошёл! Куда пойдешь?",
                              reply_markup=make_locations_markup(user_id))
@@ -170,7 +170,7 @@ def user_path_processing(message: Message):
                              reply_markup=location_markup
                              )
     else:
-        user_go(user_id)
+        users_data[user_id]['location_in_world'] = message.text
         location_markup = make_locations_markup(user_id)
         location_description = user_location_description(user_id)
         bot.send_message(user_id, text=f"<i>{location_description}</i>\n"
@@ -179,14 +179,6 @@ def user_path_processing(message: Message):
     savefile(users_data)
 
 
-# except Exception as E:
-#     print(f'{E} by {message.from_user.username} in path_processihg')
-#     bot.send_message(message.from_user.id, "У нас на сервере техническая шoколадочка, приносим извинения!")
-#     start_game(message)
-
-
-#  сделать сохранение предмета у пользователя при заход на новую локацию,
-# сделать больше локаций
 savefile(users_data)
 
 bot.polling()

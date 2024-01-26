@@ -1,9 +1,19 @@
 {
    "6332228115": {
-      "username": "Leoprofi",
-      "location_in_world": "Начальная локация",
-      "user_items": {},
-      "user_achievements": [],
-      "user_restart_spaming": 0
+      "location_in_world": "Первый этаж",
+      "user_items": [
+         "Ж",
+         "е",
+         "л",
+         "з",
+         "н",
+         "ы",
+         "й",
+         " ",
+         "к",
+         "ю",
+         "ч",
+         "и"
+      ]
    }
 }
