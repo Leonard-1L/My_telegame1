@@ -114,29 +114,44 @@ def handle_answer(message):
     if user_id not in users_data:
         return start_programm(message)
     user_location = users_data[user_id]['location_in_world']
-    if message.text == 'Запертая дверь' and "Железный ключик" in users_data[user_id]['user_items']:
-        users_data[user_id]['location_in_world'] = 'Запертая дверь'
-        send_user_location_bottoms(user_id)
-    if message.text in WORLD[user_location]['ways']: # Пересмотри эту часть, бот принимает сообщение золотого ключика толлко когда юзер находиться на втором этаже и пишет второй этаж
-        if 'location_items' in WORLD[user_location]:
-            for item in WORLD[user_location]['location_items']:
-                if item not in users_data[user_id]['user_items']:
-                    users_data[user_id]['user_items'].append(item)
-                    bot.send_message(user_id, f"Вы подобрали {WORLD[user_location]['location_items']}.")
-                    users_data[user_id]['location_in_world'] = message.text
-                    send_user_location_bottoms(user_id)
-                else:
-                    users_data[user_id]['location_in_world'] = message.text
-                    send_user_location_bottoms(user_id)
-        else:
-            users_data[user_id]['location_in_world'] = message.text
+    user_items = users_data[user_id]['user_items']
+    if message.text in WORLD[user_location]['ways']:
+        if message.text == 'Запертая дверь' and "Железный ключик" in user_items:
+            users_data[user_id]['location_in_world'] = 'Запертая дверь'
+        elif message.text == "Запертая дверь":
+            bot.send_message(user_id, "Дверь на замке. Вам надо найти ключик")
             send_user_location_bottoms(user_id)
+            return
+
+        if message.text == 'Обменять все свои вещи в инвентаре на мантию-невидимку' and 'Золотая монета' in user_items and 'Мантия-невидимка' not in user_items:
+            bot.send_message(user_id, "Отлично! Сделка удалась. Вы получили мантию-невидимку")
+            users_data[user_id]['user_items'].append('Мантия-невидимка')
+            kb = ReplyKeyboardMarkup()
+            kb.add(KeyboardButton('Запертая дверь'))
+            bot.send_message(user_id,
+                             "Возваращайтесь назад.",
+                             reply_markup=kb)
+            return
+        else:
+            kb = ReplyKeyboardMarkup()
+            kb.add(KeyboardButton('Запертая дверь'))
+            bot.send_message(user_id,
+                             "Похоже незнакомцу что-то не понравилось. Он вас прогоняет.",
+                             reply_markup=kb)
+
+        users_data[user_id]['location_in_world'] = message.text
+        if message.text == "Второй этаж" and 'Золотая монета' not in user_items:
+            bot.send_message(user_id, "Вы подобрали золотую монетку!!")
+            users_data[user_id]['user_items'] = "Золотая монета"
+        elif message.text == "Барная стойка":
+            bot.send_message(user_id, "Вы подобрали старинный ключ!!!")
+            users_data[user_id]['user_items'] = "Старинный ключ"
+        send_user_location_bottoms(user_id)
     else:
         bot.send_message(
             user_id, "Пожалуйста, выберите один из предложенных вариантов в клавиатуре:"
         )
-        return
-    savefile(users_data)
+        savefile(users_data)
 
 
 bot.polling(none_stop=True)
