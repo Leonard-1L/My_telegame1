@@ -1,4 +1,5 @@
 import time
+
 import telebot
 from telebot.types import Message, ReplyKeyboardMarkup, KeyboardButton
 from os import getenv
@@ -13,11 +14,19 @@ WORLD = load_world()
 users_data = load_users_data()
 
 
+@bot.message_handler(commands=['help'])
+def help(message: Message):
+    bot.send_message(message.from_user.id,
+                     "Если вы видите, что с ботом что-то не так, то попытайтесь использовать команду /restart. Если видите существенную ошибку, то напишите @Leoprofi")
+
+
 @bot.message_handler(commands=['start', 'restart'])
 def start_programm(message: Message):
     markup = ReplyKeyboardMarkup()
     user_id = str(message.from_user.id)
-
+    with open("Media/Фоновая муза.mp3", "rb") as file:
+        bot.send_audio(user_id, audio=file)
+        bot.send_message(user_id, "Это фоновая музыка, если хочешь погрузиться полностью, то используй наушники")
     if user_id not in users_data:
         markup.add(KeyboardButton("Начать игру"))
         users_data[user_id] = {
@@ -77,6 +86,11 @@ def continue_solution(message):
 
 def send_user_location_bottoms(user_id):
     user_location = users_data[user_id]["location_in_world"]
+    image = WORLD[user_location]['img']
+    bot.send_photo(
+        chat_id=user_id,
+        photo=open(f"Media/{image}", "rb")
+    )
     markup = make_locations_markup(ways=WORLD[user_location]['ways'])
     description = WORLD[user_location]['description']
     bot.send_message(
@@ -85,10 +99,6 @@ def send_user_location_bottoms(user_id):
         reply_markup=markup,
         parse_mode='HTML'
     )
-    # bot.send_photo(
-    #     chat_id=user_id,
-    #     photo=open(f"Media/{image}", "rb")
-    # )
 
 
 def make_locations_markup(ways):
@@ -98,16 +108,36 @@ def make_locations_markup(ways):
     return markup
 
 
-# @bot.message_handler(func=lambda message: message.text in ['Поражение', "Победа"])
+@bot.message_handler(func=lambda message: message.text in ['Поражение', "Победа"])
+def win_wasted(message: Message):
+    if message.text == "Победа":
+        bot.send_message(message.from_user.id, "Поздравляю, вы победили! 🎉🎊")
+    elif message.text == "Поражение":
+        bot.send_message(message.from_user.id,
+                         "К сожалению вы проиграли. Но ничего страшного, вы можете попытаться пройти игру еще раз!")
+    bot.send_message(message.from_user.id, "Для того, чтобы начать заного, напишите /restart")
+
+
 @bot.message_handler(func=lambda message: message.text == "Начать заново")
 def restart(message: Message):
     user_id = str(message.from_user.id)
     users_data[user_id] = {
+        "username": message.from_user.username,
         "location_in_world": "Начальная локация",
         "user_items": []
     }
     savefile(users_data)
     send_user_location_bottoms(user_id)
+
+
+@bot.message_handler(commands=["your_location"])
+def send_user_location(message: Message):
+    user_id = str(message.from_user.id)
+    if user_id in users_data:
+        location = users_data[user_id]['location_in_world']
+        bot.send_message(user_id, f"Вы {WORLD[location]["guide"]}.")
+    else:
+        start_programm(message)
 
 
 @bot.message_handler(func=lambda message: True)
@@ -117,24 +147,32 @@ def handle_answer(message):
         return start_programm(message)
     user_location = users_data[user_id]['location_in_world']
     user_items = users_data[user_id]['user_items']
+
     if message.text in WORLD[user_location]['ways']:
+
         if message.text == "Запертая дверь" and "Старинный ключ" not in user_items:
             bot.send_message(user_id, "<b>Дверь на замке. Вам надо найти ключик</b>", parse_mode='HTML')
             return
         elif message.text == 'Запертая дверь' and "Старинный ключ" in user_items:
             users_data[user_id]['location_in_world'] = 'Запертая дверь'
+            bot.send_message(user_id, "Ключ подошёл!")
+            time.sleep(2)
 
         users_data[user_id]['location_in_world'] = message.text
 
         if message.text == "Барная стойка" and 'Старинный ключ' not in user_items:
             bot.send_message(user_id, "Вы подобрали старинный ключ!!!")
             users_data[user_id]['user_items'].append("Старинный ключ")
+            time.sleep(1)
         send_user_location_bottoms(user_id)
     else:
         bot.send_message(
             user_id, "Пожалуйста, выберите один из предложенных вариантов в клавиатуре:"
         )
         savefile(users_data)
+
+
+savefile(users_data)
 
 
 bot.polling(none_stop=True)
