@@ -1,7 +1,7 @@
 import time
 
 import telebot
-from telebot.types import Message, ReplyKeyboardMarkup, KeyboardButton
+from telebot.types import Message, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from os import getenv
 from dotenv import load_dotenv
 from DATA_changes import *
@@ -15,7 +15,7 @@ users_data = load_users_data()
 
 
 @bot.message_handler(commands=['help'])
-def help(message: Message):
+def help_user(message: Message):
     bot.send_message(message.from_user.id,
                      "Если вы видите, что с ботом что-то не так, то попытайтесь использовать команду /restart. Если видите существенную ошибку, то напишите @Leoprofi")
 
@@ -44,7 +44,7 @@ def start_programm(message: Message):
             reply_markup=markup,
         )
         return
-    elif user_id in users_data and users_data[user_id]['location_in_world'] != "Начальная локация":
+    elif user_id in users_data and users_data[user_id]['location_in_world'] not in ["Начальная локация", "Сдаться"]:
         markup.add(KeyboardButton("Продолжить"), KeyboardButton("Начать заново"))
 
         text = f"С возвращением, {message.from_user.username}! Хочешь продолжить прохождение квеста?"
@@ -108,6 +108,14 @@ def make_locations_markup(ways):
     return markup
 
 
+@bot.message_handler(func=lambda message: message.text == "1606")
+def sixteen_six(message: Message):
+    markup = InlineKeyboardMarkup()
+    button = InlineKeyboardButton('Давай узнаем!', url='https://youtu.be/dQw4w9WgXcQ?si=MxA6xXlucyrelY9y')
+    markup.add(button)
+    bot.send_message(message.from_user.id, 'Интересно, что это значит?)', reply_markup=markup)
+
+
 @bot.message_handler(func=lambda message: message.text in ['Поражение', "Победа"])
 def win_wasted(message: Message):
     if message.text == "Победа":
@@ -121,11 +129,7 @@ def win_wasted(message: Message):
 @bot.message_handler(func=lambda message: message.text == "Начать заново")
 def restart(message: Message):
     user_id = str(message.from_user.id)
-    users_data[user_id] = {
-        "username": message.from_user.username,
-        "location_in_world": "Начальная локация",
-        "user_items": []
-    }
+    register_new_user(message)
     savefile(users_data)
     send_user_location_bottoms(user_id)
 
@@ -173,6 +177,5 @@ def handle_answer(message):
 
 
 savefile(users_data)
-
 
 bot.polling(none_stop=True)

@@ -14,8 +14,11 @@ def load_users_data():
         with open(users_file, "r", encoding="utf-8") as file:
             users_data = json.load(file)
             return users_data
-    except (FileNotFoundError, json.decoder.JSONDecodeError):
+    except json.decoder.JSONDecodeError:
         return {}
+    except FileNotFoundError:
+        with open(users_file, 'w') as json_file:
+            return json_file.write("{}")
 
 
 def savefile(data):
